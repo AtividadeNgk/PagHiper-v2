@@ -195,6 +195,7 @@ def criar_pix_paghiper(api_key, valor):
     TOTAL: R$ {valor}
     VALOR EM CENTAVOS: {valor_cents}
     COMISSÃO: R$ {comissao_cents/100:.2f}
+    API KEY: {api_key[:10]}...
     """)
     
     headers = {
@@ -221,15 +222,41 @@ def criar_pix_paghiper(api_key, valor):
         }]
     }
     
+    print(f"[DEBUG] Enviando requisição para PagHiper...")
+    print(f"[DEBUG] URL: {url}")
+    print(f"[DEBUG] Order ID: {order_id}")
+    
     try:
         response = requests.post(url, json=data, headers=headers)
+        
+        print(f"[DEBUG] Status Code: {response.status_code}")
+        print(f"[DEBUG] Response: {response.text[:500]}...")  # Primeiros 500 caracteres
         
         if response.status_code == 201:
             response_data = response.json()
             
             # Extrai os dados necessários
             transaction_id = response_data['create_request']['transaction_id']
-            pix_code = response_data['create_request']['bank_slip']['digitable_line']
+            
+            # PagHiper pode retornar o PIX em diferentes campos
+            pix_code = None
+            if 'bank_slip' in response_data['create_request']:
+                pix_code = response_data['create_request']['bank_slip'].get('digitable_line')
+            elif 'pix_code' in response_data['create_request']:
+                pix_code = response_data['create_request']['pix_code']
+            elif 'qrcode_base64' in response_data['create_request']:
+                # Se vier em base64, precisa decodificar
+                pix_code = response_data['create_request'].get('emv', '')
+            
+            if not pix_code:
+                print(f"[ERRO] PIX code não encontrado na resposta: {response_data}")
+                return {
+                    "error": "PIX code não encontrado na resposta",
+                    "details": str(response_data)
+                }
+            
+            print(f"[DEBUG] Transaction ID: {transaction_id}")
+            print(f"[DEBUG] PIX Code: {pix_code[:50]}...")
             
             return {
                 "pix_code": pix_code,
@@ -237,13 +264,21 @@ def criar_pix_paghiper(api_key, valor):
                 "message": "PIX PagHiper gerado com sucesso."
             }
         else:
+            error_data = {}
+            try:
+                error_data = response.json()
+            except:
+                error_data = {"text": response.text}
+                
+            print(f"[ERRO] Resposta da API: {error_data}")
+            
             return {
                 "error": f"Erro ao criar PIX. Status: {response.status_code}",
-                "details": response.text
+                "details": str(error_data)
             }
             
     except Exception as e:
-        print(f"Erro ao processar PIX PagHiper: {e}")
+        print(f"[ERRO EXCEÇÃO] {type(e).__name__}: {str(e)}")
         return {
             "error": "Erro ao processar requisição PIX",
             "details": str(e)
