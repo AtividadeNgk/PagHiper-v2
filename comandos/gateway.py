@@ -1,7 +1,6 @@
 import modules.manager as manager
 import modules.payment as payment
 import json, re, requests
-import modules.payment as payment
 
 config = json.loads(open('./config.json', 'r').read())
 
@@ -123,3 +122,12 @@ async def recebe_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['conv_state'] = False
     context.user_data.pop('gateway_type', None)  # Limpa o tipo de gateway
     return ConversationHandler.END
+
+conv_handler_gateway = ConversationHandler(
+    entry_points=[CommandHandler("gateway", gateway)],
+    states={
+        GATEWAY_ESCOLHA: [CallbackQueryHandler(gateway_escolha)],
+        GATEWAY_RECEBER: [MessageHandler(~filters.COMMAND, recebe_gateway), CallbackQueryHandler(cancel)]
+    },
+    fallbacks=[CallbackQueryHandler(error_callback)]
+    )
