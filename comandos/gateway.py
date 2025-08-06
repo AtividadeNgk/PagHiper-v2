@@ -1,6 +1,7 @@
 import modules.manager as manager
 import modules.payment as payment
 import json, re, requests
+import modules.payment as payment
 
 config = json.loads(open('./config.json', 'r').read())
 
