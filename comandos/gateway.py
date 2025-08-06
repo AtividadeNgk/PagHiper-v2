@@ -84,11 +84,11 @@ async def recebe_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gateway_type = context.user_data.get('gateway_type', 'pp')
     
     if gateway_type == 'paghiper':
-        # Validação para PagHiper
-        if not token_recebido.startswith('apk_'):
+        # Validação para PagHiper - aceita tokens que começam com apk_ ou tokens longos
+        if len(token_recebido) < 20:
             await update.message.reply_text(
-                "❌ API Key inválida\\! A API Key do PagHiper deve começar com 'apk\\_'\n\n"
-                ">Exemplo\\: apk\\_12345678\\-OqCWOKczcjutZaFRSfTlVBDpHFXpkdzz",
+                "❌ Token inválido\\! O Token do PagHiper deve ter pelo menos 20 caracteres\\.\n\n"
+                ">Verifique se copiou o token completo\\.",
                 reply_markup=reply_markup,
                 parse_mode='MarkdownV2'
             )
@@ -96,8 +96,8 @@ async def recebe_gateway(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if not payment.verificar_paghiper(token_recebido):
             await update.message.reply_text(
-                "❌ API Key inválida ou sem permissões\\!\n\n"
-                "Verifique se a API Key está correta e ativa no PagHiper\\.",
+                "❌ Token inválido ou sem permissões\\!\n\n"
+                "Verifique se o Token está correto e ativo no PagHiper\\.",
                 reply_markup=reply_markup,
                 parse_mode='MarkdownV2'
             )
