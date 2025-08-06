@@ -142,7 +142,7 @@ def criar_pix_mp(access_token: str, transaction_amount: float) -> dict:
     
 def verificar_paghiper(api_key):
     """
-    Verifica se a API Key do PagHiper é válida
+    Verifica se a API Key/Token do PagHiper é válida
     """
     url = "https://pix.paghiper.com/invoice/create/"
     headers = {
@@ -168,8 +168,8 @@ def verificar_paghiper(api_key):
     
     try:
         response = requests.post(url, json=data, headers=headers)
-        if response.status_code == 201:
-            # Sucesso - API Key válida
+        # PagHiper pode retornar 201 ou 200 para sucesso
+        if response.status_code in [200, 201]:
             return True
         else:
             print(f"Erro PagHiper: {response.status_code} - {response.text}")
